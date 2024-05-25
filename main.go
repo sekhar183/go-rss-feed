@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -16,6 +18,18 @@ func main() {
 	godotenv.Load(".env")
 
 	portString := os.Getenv("PORT")
+	//Postgres
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL not found in environment")
+	}
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Error opening database: %v\n", err)
+	}
+	defer conn.Close()
+
+	//api starts here
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
@@ -38,7 +52,7 @@ func main() {
 		Addr:    ":" + portString,
 	}
 	log.Printf("server starting on port: %s", portString)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
